@@ -1,4 +1,10 @@
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 
 /**
@@ -12,6 +18,19 @@ public class LoginJFrame extends javax.swing.JFrame {
      */
     public LoginJFrame() {
         initComponents();
+    }
+     Connection con;
+      PreparedStatement pst;
+       public void Connect(){
+        
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            con = DriverManager.getConnection("jdbc:mysql://localhost/restaurantdb","root","");
+        } catch (ClassNotFoundException ex) {
+            Logger.getLogger(FoodJFrame.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (SQLException ex) {
+            Logger.getLogger(FoodJFrame.class.getName()).log(Level.SEVERE, null, ex);
+        } 
     }
 
     /**
@@ -109,13 +128,49 @@ public class LoginJFrame extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLoginActionPerformed
-       String uzn = txtUserName.getText();
-       String pxy = txtPassword.getText();
-       if (uzn.equals("admin") && pxy.equals("123")){
-           new MainJFrame().setVisible(true);
-       } else {
-           JOptionPane.showMessageDialog(null,"Invalid Username or Password");
-       }
+//       String uzn = txtUserName.getText();
+//       String pxy = txtPassword.getText();
+//       if (uzn.equals("admin") && pxy.equals("123")){
+//           new MainJFrame().setVisible(true);
+//       } else {
+//           JOptionPane.showMessageDialog(null,"Invalid Username or Password");
+//       }
+String uzn = txtUserName.getText();
+    String pxy = txtPassword.getText();
+
+    if (uzn.isEmpty() || pxy.isEmpty()) {
+        JOptionPane.showMessageDialog(null, "Please enter both Username and Password");
+        return;
+    }
+
+    try {
+        // Establish connection if not already connected
+        if (con == null) {
+            Connect();
+        }
+
+        // Query to check username and password
+        String query = "SELECT * FROM users WHERE username = ? AND pasword = ?";
+        pst = con.prepareStatement(query);
+        pst.setString(1, uzn);
+        pst.setString(2, pxy);
+
+        // Execute query
+        java.sql.ResultSet rs = pst.executeQuery();
+
+        if (rs.next()) {
+            // If match found, open the next JFrame
+            JOptionPane.showMessageDialog(null, "Login Successful!");
+            new MainJFrame().setVisible(true);
+            this.dispose(); // Close the login JFrame
+        } else {
+            // If no match found
+            JOptionPane.showMessageDialog(null, "Invalid Username or Password");
+        }
+    } catch (SQLException ex) {
+        Logger.getLogger(LoginJFrame.class.getName()).log(Level.SEVERE, null, ex);
+        JOptionPane.showMessageDialog(null, "Database Error: " + ex.getMessage());
+    }
     }//GEN-LAST:event_btnLoginActionPerformed
 
     /**
